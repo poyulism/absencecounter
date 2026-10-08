@@ -28,10 +28,8 @@
     .container {
       max-width: 700px;
       margin: 0 auto;
-      padding: 20px 12px;
+      padding: 20px 12px 90px;
       min-height: 100vh;
-      position: relative;
-      padding-bottom: 90px;
     }
 
     h1 {
@@ -137,11 +135,15 @@
     .counter-buttons button {
       flex: 1;
       height: 52px;
+
       border: none;
       border-radius: 10px;
+
       font-size: 18px;
       font-weight: 500;
+
       cursor: pointer;
+
       background: #e5e5e5;
       color: #333;
     }
@@ -152,6 +154,7 @@
 
     .counter-buttons button:disabled {
       opacity: 0.4;
+      cursor: default;
     }
 
     .help {
@@ -176,6 +179,7 @@
 
       display: flex;
       justify-content: space-between;
+
       pointer-events: none;
     }
 
@@ -209,11 +213,15 @@
 
     <h1>欠席カウンター</h1>
 
-    <div class="semester" id="semesterLabel">
+    <div
+      class="semester"
+      id="semesterLabel"
+    >
       1学期
     </div>
 
     <table>
+
       <thead>
         <tr>
           <th></th>
@@ -227,7 +235,9 @@
       </thead>
 
       <tbody id="schedule"></tbody>
+
     </table>
+
 
     <div class="counter-buttons">
 
@@ -247,12 +257,14 @@
 
     </div>
 
+
     <div class="help">
       セルを選択して欠席回数を変更できます<br>
       長押し：欠席上限を設定
     </div>
 
   </div>
+
 
   <div class="semester-navigation">
 
@@ -274,29 +286,46 @@
 
 <script>
 
-  const DAYS = ["月", "火", "水", "木", "金", "土"];
+  const DAYS = [
+    "月",
+    "火",
+    "水",
+    "木",
+    "金",
+    "土"
+  ];
+
   const PERIODS = 5;
+
 
   /*
    * 学期データ
    *
    * semesters[0] = 1学期
    * semesters[1] = 2学期
-   * semesters[2] = 3学期...
+   * semesters[2] = 3学期
    */
 
   let semesters =
     JSON.parse(
-      localStorage.getItem("absenceCounterSemesters")
-    ) || [
-      {}
-    ];
+      localStorage.getItem(
+        "absenceCounterSemesters"
+      )
+    ) || [{}];
+
+
+  /*
+   * 現在の学期
+   */
 
   let currentSemester =
     parseInt(
-      localStorage.getItem("absenceCounterCurrentSemester"),
+      localStorage.getItem(
+        "absenceCounterCurrentSemester"
+      ),
       10
     );
+
 
   if (
     isNaN(currentSemester) ||
@@ -305,23 +334,37 @@
     currentSemester = 0;
   }
 
+
   /*
    * 現在選択されているセル
+   *
+   * 例：
+   * "0-0" = 月曜1限
+   * "1-2" = 火曜3限
    */
+
   let selectedKey = null;
 
 
   const schedule =
-    document.getElementById("schedule");
+    document.getElementById(
+      "schedule"
+    );
 
   const semesterLabel =
-    document.getElementById("semesterLabel");
+    document.getElementById(
+      "semesterLabel"
+    );
 
   const increaseButton =
-    document.getElementById("increaseButton");
+    document.getElementById(
+      "increaseButton"
+    );
 
   const decreaseButton =
-    document.getElementById("decreaseButton");
+    document.getElementById(
+      "decreaseButton"
+    );
 
   const previousSemesterButton =
     document.getElementById(
@@ -330,12 +373,17 @@
 
 
   /*
-   * 現在の学期のデータ
+   * 現在の学期のデータを取得
    */
+
   function getCurrentData() {
 
-    if (!semesters[currentSemester]) {
+    if (
+      !semesters[currentSemester]
+    ) {
+
       semesters[currentSemester] = {};
+
     }
 
     return semesters[currentSemester];
@@ -344,14 +392,24 @@
 
   /*
    * 表を作成
+   *
+   * IMPORTANT:
+   * ここでは selectedKey を
+   * null にしない。
+   *
+   * これによって、
+   * セルを選択した後に＋1・−1を
+   * 使用できる。
    */
+
   function createTable() {
 
     schedule.innerHTML = "";
 
-    selectedKey = null;
 
-    const data = getCurrentData();
+    const data =
+      getCurrentData();
+
 
     semesterLabel.textContent =
       `${currentSemester + 1}学期`;
@@ -364,16 +422,22 @@
     ) {
 
       const tr =
-        document.createElement("tr");
+        document.createElement(
+          "tr"
+        );
 
 
       const periodCell =
-        document.createElement("th");
+        document.createElement(
+          "th"
+        );
 
       periodCell.textContent =
         period + 1;
 
-      tr.appendChild(periodCell);
+      tr.appendChild(
+        periodCell
+      );
 
 
       for (
@@ -383,7 +447,10 @@
       ) {
 
         const td =
-          document.createElement("td");
+          document.createElement(
+            "td"
+          );
+
 
         const key =
           `${day}-${period}`;
@@ -403,29 +470,35 @@
 
 
         tr.appendChild(td);
+
       }
 
 
       schedule.appendChild(tr);
+
     }
 
 
     updateButtons();
 
     updatePreviousButton();
+
   }
 
 
   /*
    * セルの表示
    */
+
   function updateCell(
     td,
     key,
     data
   ) {
 
-    const item = data[key];
+    const item =
+      data[key];
+
 
     td.className = "";
 
@@ -433,22 +506,42 @@
     /*
      * 授業なし
      */
+
     if (
       !item ||
       !item.exists
     ) {
 
-      td.classList.add("empty");
+      td.classList.add(
+        "empty"
+      );
 
       td.textContent = "";
+
+      /*
+       * 授業なしでも、
+       * 選択されていることが
+       * 分かるようにする。
+       */
+
+      if (
+        key === selectedKey
+      ) {
+
+        td.classList.add(
+          "selected"
+        );
+
+      }
 
       return;
     }
 
 
     /*
-     * 選択中のセル
+     * 選択中
      */
+
     if (
       key === selectedKey
     ) {
@@ -456,23 +549,31 @@
       td.classList.add(
         "selected"
       );
+
     }
 
 
     /*
      * 欠席0回
      */
+
     if (
       item.count === 0
     ) {
 
       td.textContent = "－";
 
-      td.classList.add("blue");
+      td.classList.add(
+        "blue"
+      );
 
       return;
     }
 
+
+    /*
+     * 欠席回数
+     */
 
     td.textContent =
       item.count;
@@ -481,11 +582,14 @@
     /*
      * 上限なし
      */
+
     if (
       item.max === null
     ) {
 
-      td.classList.add("blue");
+      td.classList.add(
+        "blue"
+      );
 
       return;
     }
@@ -494,6 +598,7 @@
     /*
      * 上限到達
      */
+
     if (
       item.count >= item.max
     ) {
@@ -508,9 +613,15 @@
 
     /*
      * 上限の1回前
+     *
+     * 例：
+     * 上限3 → 2が黄色
+     * 上限5 → 4が黄色
      */
+
     if (
-      item.count === item.max - 1
+      item.count ===
+      item.max - 1
     ) {
 
       td.classList.add(
@@ -524,13 +635,18 @@
     /*
      * それ以外
      */
-    td.classList.add("green");
+
+    td.classList.add(
+      "green"
+    );
+
   }
 
 
   /*
    * セルの操作
    */
+
   function setupEvents(
     td,
     key
@@ -544,6 +660,7 @@
     /*
      * 押し始め
      */
+
     td.addEventListener(
       "pointerdown",
       () => {
@@ -552,13 +669,16 @@
 
 
         pressTimer =
-          setTimeout(() => {
+          setTimeout(
+            () => {
 
-            longPress = true;
+              longPress = true;
 
-            setMax(key);
+              setMax(key);
 
-          }, 600);
+            },
+            600
+          );
 
       }
     );
@@ -567,6 +687,7 @@
     /*
      * 指を離す
      */
+
     td.addEventListener(
       "pointerup",
       () => {
@@ -580,8 +701,9 @@
 
 
     /*
-     * 指がセルから離れた
+     * セルから指が離れた場合
      */
+
     td.addEventListener(
       "pointerleave",
       () => {
@@ -597,41 +719,56 @@
     /*
      * 通常タップ
      *
-     * 今回は欠席回数を変更せず、
+     * カウントは変更せず、
      * セルを選択するだけ。
      */
+
     td.addEventListener(
       "click",
       () => {
 
+
         /*
-         * 長押し直後のクリックは
+         * 長押し直後のクリックを
          * 完全に無視する。
          *
-         * これで
-         * 「上限を入力したら＋1される」
-         * 問題を防止。
+         * これによって
+         *
+         * 長押し
+         * ↓
+         * 上限入力
+         * ↓
+         * ＋1される
+         *
+         * という問題を防ぐ。
          */
-        if (longPress) {
+
+        if (
+          longPress
+        ) {
 
           longPress = false;
 
           return;
+
         }
 
 
         selectedKey = key;
 
+
         createTable();
 
       }
     );
+
   }
 
 
   /*
-   * 選択セルを＋1
+   * ＋1
    */
+
   function increaseSelected() {
 
     if (
@@ -639,6 +776,7 @@
     ) {
 
       return;
+
     }
 
 
@@ -649,24 +787,34 @@
     /*
      * 授業なし
      *
-     * ＋1を押したら
-     * 授業あり・欠席0回になる。
+     * ＋1ボタンを押した場合、
+     * 授業を登録する。
+     *
+     * ただし最初は0回なので
+     * 表示は「－」。
      */
+
     if (
       !data[selectedKey]
     ) {
 
       data[selectedKey] = {
+
         exists: true,
+
         count: 0,
+
         max: null
+
       };
+
 
       save();
 
       createTable();
 
       return;
+
     }
 
 
@@ -675,28 +823,36 @@
 
 
     /*
-     * 上限0の場合
+     * 上限0
      */
+
     if (
       item.max !== null &&
       item.max <= 0
     ) {
 
       return;
+
     }
 
 
     /*
-     * 上限に到達している場合
+     * 上限到達
      */
+
     if (
       item.max !== null &&
       item.count >= item.max
     ) {
 
       return;
+
     }
 
+
+    /*
+     * カウントアップ
+     */
 
     item.count++;
 
@@ -704,12 +860,14 @@
     save();
 
     createTable();
+
   }
 
 
   /*
-   * 選択セルを−1
+   * −1
    */
+
   function decreaseSelected() {
 
     if (
@@ -717,6 +875,7 @@
     ) {
 
       return;
+
     }
 
 
@@ -731,31 +890,39 @@
     /*
      * 授業なし
      */
+
     if (
       !item ||
       !item.exists
     ) {
 
       return;
+
     }
 
 
     /*
-     * 欠席回数が1以上
+     * 1以上なら−1
      */
+
     if (
       item.count > 0
     ) {
 
       item.count--;
 
-    } else {
+    }
 
-      /*
-       * 0回から−1
-       * → 授業なしに戻す
-       */
-      delete data[selectedKey];
+    /*
+     * 0から−1
+     * → 授業なし
+     */
+
+    else {
+
+      delete data[
+        selectedKey
+      ];
 
     }
 
@@ -763,12 +930,14 @@
     save();
 
     createTable();
+
   }
 
 
   /*
-   * 欠席上限設定
+   * 欠席上限を設定
    */
+
   function setMax(key) {
 
     const data =
@@ -776,16 +945,35 @@
 
 
     /*
-     * 授業なしなら授業を作る
+     * もともと授業があったか
+     * 記録しておく。
+     *
+     * キャンセルした場合に、
+     * 長押しによって勝手に
+     * 授業が作られないようにする。
      */
+
+    const originallyExists =
+      !!data[key];
+
+
+    /*
+     * 授業なしの場合、
+     * 長押しで授業を作る。
+     */
+
     if (
       !data[key]
     ) {
 
       data[key] = {
+
         exists: true,
+
         count: 0,
+
         max: null
+
       };
 
     }
@@ -797,43 +985,41 @@
 
     const answer =
       prompt(
+
         "欠席できる最大回数を入力してください。\n" +
         "空欄にすると上限なし。",
+
         current === null
           ? ""
           : current
+
       );
 
 
     /*
      * キャンセル
      */
+
     if (
       answer === null
     ) {
 
       /*
-       * 長押しで新しく作った
-       * 授業だった場合、
-       * キャンセルなら元に戻す。
+       * もともと授業がなかった場合は、
+       * 長押し前の状態に戻す。
        */
+
       if (
-        data[key].count === 0 &&
-        data[key].max === null
+        !originallyExists
       ) {
 
-        /*
-         * もともと存在していたかは
-         * 判別できるようにするため、
-         * 長押し開始前の情報を使う
-         * 必要がある。
-         *
-         * 今回はキャンセル時には
-         * 授業を残す。
-         */
+        delete data[key];
+
       }
 
+
       return;
+
     }
 
 
@@ -841,13 +1027,16 @@
      * 空欄
      * → 上限なし
      */
+
     if (
       answer.trim() === ""
     ) {
 
       data[key].max = null;
 
-    } else {
+    }
+
+    else {
 
       const max =
         parseInt(
@@ -855,6 +1044,10 @@
           10
         );
 
+
+      /*
+       * 不正な入力
+       */
 
       if (
         isNaN(max) ||
@@ -865,7 +1058,21 @@
           "0以上の数字を入力してください。"
         );
 
+        /*
+         * 新しく作った授業なら
+         * 元に戻す。
+         */
+
+        if (
+          !originallyExists
+        ) {
+
+          delete data[key];
+
+        }
+
         return;
+
       }
 
 
@@ -873,9 +1080,11 @@
 
 
       /*
-       * 現在の欠席数が上限を
-       * 超えないようにする
+       * 現在の欠席回数が
+       * 上限を超えていた場合、
+       * 上限まで下げる。
        */
+
       if (
         data[key].count > max
       ) {
@@ -883,27 +1092,31 @@
         data[key].count = max;
 
       }
+
     }
 
 
     save();
 
     createTable();
+
   }
 
 
   /*
    * 次の学期へ
    */
+
   function nextSemester() {
 
     currentSemester++;
 
 
     /*
-     * まだ存在しない学期なら
+     * 新しい学期なら
      * 空の表を作る。
      */
+
     if (
       !semesters[currentSemester]
     ) {
@@ -913,6 +1126,11 @@
     }
 
 
+    /*
+     * 学期を移動したので
+     * セル選択を解除。
+     */
+
     selectedKey = null;
 
 
@@ -926,27 +1144,36 @@
 
 
     createTable();
+
   }
 
 
   /*
    * 前の学期へ
    */
+
   function previousSemester() {
 
     /*
-     * 1学期より前には戻れない
+     * 1学期より前には戻れない。
      */
+
     if (
       currentSemester <= 0
     ) {
 
       return;
+
     }
 
 
     currentSemester--;
 
+
+    /*
+     * 学期を移動したので
+     * セル選択を解除。
+     */
 
     selectedKey = null;
 
@@ -961,12 +1188,14 @@
 
 
     createTable();
+
   }
 
 
   /*
    * ＋1 / −1ボタンの状態
    */
+
   function updateButtons() {
 
     const data =
@@ -976,15 +1205,19 @@
     /*
      * セル未選択
      */
+
     if (
       selectedKey === null
     ) {
 
-      increaseButton.disabled = true;
+      increaseButton.disabled =
+        true;
 
-      decreaseButton.disabled = true;
+      decreaseButton.disabled =
+        true;
 
       return;
+
     }
 
 
@@ -995,25 +1228,33 @@
     /*
      * 授業なし
      *
-     * ＋1は可能
-     * −1は不可
+     * ＋1 → 使用可能
+     * −1 → 使用不可
      */
+
     if (
       !item ||
       !item.exists
     ) {
 
-      increaseButton.disabled = false;
+      increaseButton.disabled =
+        false;
 
-      decreaseButton.disabled = true;
+      decreaseButton.disabled =
+        true;
 
       return;
+
     }
 
 
     /*
      * ＋1
+     *
+     * 上限に達していれば
+     * 無効。
      */
+
     increaseButton.disabled =
       item.max !== null &&
       item.count >= item.max;
@@ -1021,14 +1262,20 @@
 
     /*
      * −1
+     *
+     * 授業が存在すれば使用可能。
      */
-    decreaseButton.disabled = false;
+
+    decreaseButton.disabled =
+      false;
+
   }
 
 
   /*
-   * 前の学期ボタン表示
+   * 前の学期ボタン
    */
+
   function updatePreviousButton() {
 
     if (
@@ -1039,24 +1286,30 @@
         "hidden"
       );
 
-    } else {
+    }
+
+    else {
 
       previousSemesterButton.classList.remove(
         "hidden"
       );
 
     }
+
   }
 
 
   /*
    * 保存
    */
+
   function save() {
 
     localStorage.setItem(
       "absenceCounterSemesters",
-      JSON.stringify(semesters)
+      JSON.stringify(
+        semesters
+      )
     );
 
 
@@ -1064,12 +1317,14 @@
       "absenceCounterCurrentSemester",
       currentSemester
     );
+
   }
 
 
   /*
    * 初期表示
    */
+
   createTable();
 
 </script>
