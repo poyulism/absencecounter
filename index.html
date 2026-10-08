@@ -15,8 +15,13 @@
     body {
       margin: 0;
       background: #f5f5f5;
-      font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue",
-                   "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+      font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Helvetica Neue",
+        "Hiragino Kaku Gothic ProN",
+        "Yu Gothic",
+        sans-serif;
       color: #333;
     }
 
@@ -54,49 +59,89 @@
       height: 72px;
       text-align: center;
       vertical-align: middle;
-      background: white;
+
       border-radius: 8px;
+
       font-size: 26px;
       font-weight: 500;
+
       cursor: pointer;
       user-select: none;
       -webkit-user-select: none;
-      transition: transform 0.08s, background-color 0.15s;
+
+      transition:
+        transform 0.08s,
+        background-color 0.15s;
     }
 
     td:active {
       transform: scale(0.96);
     }
 
+
+    /* =========================
+       授業なし
+       ========================= */
+
     td.empty {
       background: #e9e9e9;
       color: transparent;
     }
 
-    /* 欠席0回 */
-    td.zero {
-      background: #e4f3e4;
+
+    /* =========================
+       青
+       授業あり・欠席0回
+       上限なし
+       ========================= */
+
+    td.blue {
+      background: #dceeff;
+      color: #2674c9;
     }
 
-    /* 上限まで残り1回 */
-    td.warning {
-      background: #fff3c4;
+
+    /* =========================
+       緑
+       欠席1回以上
+       上限まで余裕あり
+       ========================= */
+
+    td.green {
+      background: #e1f3e1;
+      color: #31833b;
     }
 
-    /* 上限到達 */
+
+    /* =========================
+       赤
+       欠席上限到達
+       ========================= */
+
     td.danger {
       background: #ffdede;
+      color: #d33;
     }
+
+
+    /* =========================
+       操作説明
+       ========================= */
 
     .help {
       margin-top: 18px;
+
       text-align: center;
+
       font-size: 12px;
       color: #888;
+
       line-height: 1.8;
     }
+
   </style>
 </head>
+
 
 <body>
 
@@ -104,10 +149,14 @@
 
     <h1>欠席カウンター</h1>
 
+
     <table>
+
       <thead>
+
         <tr>
           <th></th>
+
           <th>月</th>
           <th>火</th>
           <th>水</th>
@@ -115,322 +164,560 @@
           <th>金</th>
           <th>土</th>
         </tr>
+
       </thead>
 
+
       <tbody id="schedule"></tbody>
+
     </table>
 
+
     <div class="help">
-      タップ：欠席＋1　／　ダブルタップ：−1<br>
+      タップ：＋1　／　ダブルタップ：−1<br>
       長押し：欠席上限を設定
     </div>
 
   </div>
 
+
 <script>
 
+  // =========================
+  // 基本設定
+  // =========================
+
   const DAYS = ["月", "火", "水", "木", "金", "土"];
+
   const PERIODS = 5;
 
-  /*
-    データ構造
 
-    {
-      "0-0": {
-        exists: true,
-        count: 1,
-        max: 3
-      }
-    }
-
-    0-0 = 月曜1限
-    0-1 = 火曜1限
-    1-0 = 月曜2限
-    ...
-  */
+  // =========================
+  // データ読み込み
+  // =========================
 
   let data = JSON.parse(
     localStorage.getItem("absenceCounter")
   ) || {};
 
-  const schedule = document.getElementById("schedule");
 
-  // -------------------------
-  // 表を作る
-  // -------------------------
+  const schedule =
+    document.getElementById("schedule");
+
+
+  // =========================
+  // 表を作成
+  // =========================
 
   function createTable() {
 
     schedule.innerHTML = "";
 
-    for (let period = 0; period < PERIODS; period++) {
 
-      const tr = document.createElement("tr");
+    for (
+      let period = 0;
+      period < PERIODS;
+      period++
+    ) {
+
+      const tr =
+        document.createElement("tr");
+
 
       // 時限
-      const periodCell = document.createElement("th");
-      periodCell.textContent = period + 1;
+      const periodCell =
+        document.createElement("th");
+
+      periodCell.textContent =
+        period + 1;
+
       tr.appendChild(periodCell);
 
+
       // 曜日
-      for (let day = 0; day < DAYS.length; day++) {
+      for (
+        let day = 0;
+        day < DAYS.length;
+        day++
+      ) {
 
-        const td = document.createElement("td");
+        const td =
+          document.createElement("td");
 
-        const key = `${day}-${period}`;
+
+        const key =
+          `${day}-${period}`;
+
 
         updateCell(td, key);
 
         setupEvents(td, key);
 
+
         tr.appendChild(td);
       }
+
 
       schedule.appendChild(tr);
     }
   }
 
 
-  // -------------------------
+  // =========================
   // セルの表示
-  // -------------------------
+  // =========================
 
   function updateCell(td, key) {
 
     const item = data[key];
 
+
+    // 一度クラスをリセット
     td.className = "";
 
-    if (!item || !item.exists) {
+
+    // -------------------------
+    // 授業なし
+    // -------------------------
+
+    if (
+      !item ||
+      !item.exists
+    ) {
+
       td.classList.add("empty");
+
+      // 授業なしは完全に空欄
       td.textContent = "";
+
       return;
     }
 
-    td.textContent = item.count;
 
+    // -------------------------
     // 欠席0回
-    if (item.count === 0) {
-      td.classList.add("zero");
+    // -------------------------
+
+    if (
+      item.count === 0
+    ) {
+
+      // 0ではなく「－」
+      td.textContent = "－";
+
+      // 青
+      td.classList.add("blue");
+
+      return;
     }
 
-    // 上限まで残り1回
-    else if (item.max !== null &&
-             item.max - item.count === 1) {
-      td.classList.add("warning");
-    }
 
+    // -------------------------
+    // 欠席1回以上
+    // -------------------------
+
+    td.textContent =
+      item.count;
+
+
+    // -------------------------
     // 上限到達
-    else if (item.max !== null &&
-             item.count >= item.max) {
+    // -------------------------
+
+    if (
+      item.max !== null &&
+      item.count >= item.max
+    ) {
+
       td.classList.add("danger");
+
+      return;
     }
+
+
+    // -------------------------
+    // 上限あり・まだ余裕あり
+    // -------------------------
+
+    if (
+      item.max !== null &&
+      item.count < item.max
+    ) {
+
+      td.classList.add("green");
+
+      return;
+    }
+
+
+    // -------------------------
+    // 上限なし
+    // -------------------------
+
+    td.classList.add("blue");
   }
 
 
-  // -------------------------
-  // タップ・ダブルタップ・長押し
-  // -------------------------
+  // =========================
+  // 操作イベント
+  // =========================
 
   function setupEvents(td, key) {
 
     let pressTimer = null;
+
     let longPress = false;
+
     let clickTimer = null;
 
-    // タップ開始
-    td.addEventListener("pointerdown", () => {
 
-      longPress = false;
+    // -------------------------
+    // 指を押した
+    // -------------------------
 
-      pressTimer = setTimeout(() => {
+    td.addEventListener(
+      "pointerdown",
+      () => {
 
-        longPress = true;
-
-        setMax(key);
-
-      }, 600);
-
-    });
+        longPress = false;
 
 
-    // タップ終了
-    td.addEventListener("pointerup", () => {
+        pressTimer =
+          setTimeout(() => {
 
-      clearTimeout(pressTimer);
+            longPress = true;
 
-    });
+            setMax(key);
 
+          }, 600);
 
-    td.addEventListener("pointerleave", () => {
-
-      clearTimeout(pressTimer);
-
-    });
-
-
-    // タップ
-    td.addEventListener("click", () => {
-
-      if (longPress) {
-        return;
       }
+    );
 
-      /*
-        すぐに処理せず、
-        ダブルタップかどうかを少し待つ
-      */
 
-      if (clickTimer !== null) {
+    // -------------------------
+    // 指を離した
+    // -------------------------
 
+    td.addEventListener(
+      "pointerup",
+      () => {
+
+        clearTimeout(
+          pressTimer
+        );
+
+      }
+    );
+
+
+    // -------------------------
+    // セルから指が離れた
+    // -------------------------
+
+    td.addEventListener(
+      "pointerleave",
+      () => {
+
+        clearTimeout(
+          pressTimer
+        );
+
+      }
+    );
+
+
+    // -------------------------
+    // タップ
+    // -------------------------
+
+    td.addEventListener(
+      "click",
+      () => {
+
+        // 長押しだった場合
+        // 通常のタップ処理をしない
+        if (longPress) {
+          return;
+        }
+
+
+        // ---------------------
         // ダブルタップ
-        clearTimeout(clickTimer);
-        clickTimer = null;
+        // ---------------------
 
-        decrease(key);
+        if (
+          clickTimer !== null
+        ) {
 
-      } else {
-
-        clickTimer = setTimeout(() => {
+          clearTimeout(
+            clickTimer
+          );
 
           clickTimer = null;
 
-          increase(key);
 
-        }, 250);
+          decrease(key);
+
+          return;
+        }
+
+
+        // ---------------------
+        // 1回目のタップ
+        // ---------------------
+
+        clickTimer =
+          setTimeout(() => {
+
+            clickTimer = null;
+
+            increase(key);
+
+          }, 250);
 
       }
-
-    });
+    );
   }
 
 
-  // -------------------------
+  // =========================
+  // タップ
   // 欠席＋1
-  // -------------------------
+  // =========================
 
   function increase(key) {
 
-    // 授業がなければ追加
+    // -------------------------
+    // 授業なし
+    // -------------------------
+
     if (!data[key]) {
 
+      // 授業を追加する
+      // 欠席回数は0
       data[key] = {
+
         exists: true,
+
         count: 0,
+
         max: null
+
       };
 
-    }
 
-    const item = data[key];
+      save();
 
-    // 上限が設定されていて到達している
-    if (item.max !== null &&
-        item.count >= item.max) {
+      createTable();
 
       return;
     }
 
+
+    const item =
+      data[key];
+
+
+    // -------------------------
+    // 上限到達済み
+    // -------------------------
+
+    if (
+      item.max !== null &&
+      item.count >= item.max
+    ) {
+
+      return;
+    }
+
+
+    // -------------------------
+    // 欠席＋1
+    // -------------------------
+
     item.count++;
 
+
     save();
+
     createTable();
   }
 
 
-  // -------------------------
+  // =========================
+  // ダブルタップ
   // 欠席−1
-  // -------------------------
+  // =========================
 
   function decrease(key) {
 
-    const item = data[key];
+    const item =
+      data[key];
 
-    if (!item || !item.exists) {
+
+    // 授業なし
+    if (
+      !item ||
+      !item.exists
+    ) {
+
       return;
     }
 
-    if (item.count > 0) {
+
+    // -------------------------
+    // 欠席回数が1以上
+    // -------------------------
+
+    if (
+      item.count > 0
+    ) {
 
       item.count--;
 
-    } else {
+    }
 
-      // 0でダブルタップすると授業を削除
+
+    // -------------------------
+    // 欠席0回
+    // → 授業を削除
+    // -------------------------
+
+    else {
+
       delete data[key];
 
     }
 
+
     save();
+
     createTable();
   }
 
 
-  // -------------------------
+  // =========================
+  // 長押し
   // 欠席上限設定
-  // -------------------------
+  // =========================
 
   function setMax(key) {
 
-    /*
-      授業がなければ、
-      長押しで授業を追加する
-    */
+    // -------------------------
+    // 授業がない場合
+    // -------------------------
 
     if (!data[key]) {
 
       data[key] = {
+
         exists: true,
+
         count: 0,
+
         max: null
+
       };
+
     }
 
-    const current = data[key].max;
 
-    const answer = prompt(
-      "欠席できる最大回数を入力してください。\n" +
-      "空欄にすると上限なし。",
-      current === null ? "" : current
-    );
+    const current =
+      data[key].max;
+
+
+    // -------------------------
+    // 入力
+    // -------------------------
+
+    const answer =
+      prompt(
+        "欠席できる最大回数を入力してください。\n" +
+        "空欄にすると上限なし。",
+        current === null
+          ? ""
+          : current
+      );
+
 
     // キャンセル
-    if (answer === null) {
+    if (
+      answer === null
+    ) {
+
       return;
     }
 
-    // 空欄 → 上限なし
-    if (answer.trim() === "") {
+
+    // -------------------------
+    // 空欄
+    // → 上限なし
+    // -------------------------
+
+    if (
+      answer.trim() === ""
+    ) {
 
       data[key].max = null;
 
-    } else {
+    }
 
-      const max = parseInt(answer, 10);
 
-      if (isNaN(max) || max < 0) {
+    // -------------------------
+    // 数字
+    // -------------------------
 
-        alert("0以上の数字を入力してください。");
+    else {
+
+      const max =
+        parseInt(
+          answer,
+          10
+        );
+
+
+      // 不正な入力
+      if (
+        isNaN(max) ||
+        max < 0
+      ) {
+
+        alert(
+          "0以上の数字を入力してください。"
+        );
+
         return;
-
       }
+
 
       data[key].max = max;
 
+
+      // -----------------------
       // 上限を下げた場合
-      if (data[key].count > max) {
+      // -----------------------
+
+      if (
+        data[key].count > max
+      ) {
+
         data[key].count = max;
+
       }
+
     }
 
+
     save();
+
     createTable();
   }
 
 
-  // -------------------------
-  // 保存
-  // -------------------------
+  // =========================
+  // データ保存
+  // =========================
 
   function save() {
 
@@ -442,7 +729,10 @@
   }
 
 
+  // =========================
   // 初期表示
+  // =========================
+
   createTable();
 
 </script>
