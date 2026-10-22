@@ -39,12 +39,38 @@
       font-weight: 600;
     }
 
-    .semester {
-      text-align: center;
-      font-size: 14px;
+    .semester-history {
+      margin: 0 0 16px;
+    }
+
+    .semester-history-title {
+      margin: 0 0 8px;
+      font-size: 12px;
       color: #777;
-      margin-top: -10px;
-      margin-bottom: 8px;
+    }
+
+    .semester-history-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+    }
+
+    .semester-chip {
+      border: 1px solid #d5d5d5;
+      border-radius: 8px;
+      background: #fff;
+      color: #555;
+      padding: 7px 10px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .semester-chip.current {
+      border-color: #2674c9;
+      background: #2674c9;
+      color: #fff;
+      font-weight: 700;
+      box-shadow: 0 0 0 2px rgba(38, 116, 201, 0.16);
     }
 
     .semester-dialog-backdrop {
@@ -225,14 +251,6 @@
       cursor: default;
     }
 
-    .help {
-      margin-top: 14px;
-      text-align: center;
-      font-size: 12px;
-      color: #888;
-      line-height: 1.8;
-    }
-
     /* 学期移動 */
     .semester-navigation {
       position: fixed;
@@ -281,7 +299,10 @@
 
     <h1>欠席カウンター</h1>
 
-
+    <div class="semester-history" aria-label="追加済みの学期一覧">
+      <p class="semester-history-title">追加した学期（青色が現在表示中）</p>
+      <div class="semester-history-list" id="semesterHistoryList"></div>
+    </div>
 
     <table>
 
@@ -318,12 +339,6 @@
         ＋
       </button>
 
-    </div>
-
-
-    <div class="help">
-      セルを選択して欠席回数を変更できます<br>
-      長押し：欠席上限を設定
     </div>
 
   </div>
@@ -486,6 +501,9 @@
   const targetSemesterSelect =
     document.getElementById("targetSemesterSelect");
 
+  const semesterHistoryList =
+    document.getElementById("semesterHistoryList");
+
 
 
   /*
@@ -599,8 +617,39 @@
 
     updatePreviousButton();
 
+    renderSemesterHistory();
+
   }
 
+
+  /* 追加済みの学期を一覧表示し、現在の記録を強調する。 */
+  function renderSemesterHistory() {
+    semesterHistoryList.innerHTML = "";
+    const seen = {};
+    semesterRecords.forEach((record, index) => {
+      const semester = Math.max(0, Math.min(record.semester, LAST_SEMESTER));
+      const year = Math.floor(semester / 2) + 1;
+      const term = semester % 2 + 1;
+      const key = String(semester);
+      seen[key] = (seen[key] || 0) + 1;
+      const chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "semester-chip";
+      chip.textContent = year + "-" + term + (seen[key] > 1 ? " (" + seen[key] + ")" : "");
+      chip.setAttribute("aria-label", year + "年" + term + "学期" + (seen[key] > 1 ? "、" + seen[key] + "回目の記録" : "") + (index === currentRecordIndex ? "、現在表示中" : ""));
+      if (index === currentRecordIndex) {
+        chip.classList.add("current");
+        chip.setAttribute("aria-current", "page");
+      }
+      chip.addEventListener("click", () => {
+        currentRecordIndex = index;
+        selectedKey = null;
+        save();
+        createTable();
+      });
+      semesterHistoryList.appendChild(chip);
+    });
+  }
 
   /*
    * セルの表示
