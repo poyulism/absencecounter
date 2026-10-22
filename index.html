@@ -228,13 +228,6 @@
 
     <h1>欠席カウンター</h1>
 
-    <div
-      class="semester"
-      id="semesterLabel"
-    >
-      1年1学期
-    </div>
-
     <div class="semester-select-wrap">
       <select
         class="semester-select"
@@ -331,6 +324,8 @@
 
   const PERIODS = 5;
 
+  const LAST_SEMESTER = 7;
+
 
   /*
    * 学期データ
@@ -391,11 +386,6 @@
       "schedule"
     );
 
-  const semesterLabel =
-    document.getElementById(
-      "semesterLabel"
-    );
-
   const increaseButton =
     document.getElementById(
       "increaseButton"
@@ -421,7 +411,6 @@
       "semesterSelect"
     );
 
-  const LAST_SEMESTER = 7;
 
 
   /*
@@ -466,8 +455,6 @@
     const schoolYear = Math.floor(currentSemester / 2) + 1;
     const semesterInYear = (currentSemester % 2) + 1;
 
-    const label = `${schoolYear}年${semesterInYear}学期`;
-    semesterLabel.textContent = label;
     semesterSelect.value = String(currentSemester);
 
 
