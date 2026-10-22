@@ -47,19 +47,72 @@
       margin-bottom: 8px;
     }
 
-    .semester-select-wrap {
-      display: flex;
+    .semester-dialog-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      background: rgba(0, 0, 0, 0.35);
+      align-items: center;
       justify-content: center;
-      margin-bottom: 12px;
+      padding: 20px;
     }
 
-    .semester-select {
-      padding: 8px 12px;
+    .semester-dialog-backdrop.open {
+      display: flex;
+    }
+
+    .semester-dialog {
+      width: 100%;
+      max-width: 340px;
+      background: #fff;
+      border-radius: 14px;
+      padding: 22px 18px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.18);
+    }
+
+    .semester-dialog h2 {
+      font-size: 18px;
+      margin: 0 0 8px;
+      text-align: center;
+    }
+
+    .semester-dialog p {
+      margin: 0 0 16px;
+      color: #666;
+      font-size: 13px;
+      text-align: center;
+    }
+
+    .semester-dialog select {
+      width: 100%;
+      padding: 10px;
       border: 1px solid #ccc;
       border-radius: 8px;
       background: #fff;
-      color: #333;
+      font-size: 16px;
+      margin-bottom: 16px;
+    }
+
+    .semester-dialog-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .semester-dialog-actions button {
+      flex: 1;
+      border: 0;
+      border-radius: 8px;
+      padding: 11px 8px;
       font-size: 14px;
+      background: #e5e5e5;
+      color: #333;
+      cursor: pointer;
+    }
+
+    .semester-dialog-actions button.primary {
+      background: #2674c9;
+      color: #fff;
     }
 
     table {
@@ -228,23 +281,7 @@
 
     <h1>欠席カウンター</h1>
 
-    <div class="semester-select-wrap">
-      <select
-        class="semester-select"
-        id="semesterSelect"
-        aria-label="表示する学期を選択"
-        onchange="selectSemester(this.value)"
-      >
-        <option value="0">1年1学期</option>
-        <option value="1">1年2学期</option>
-        <option value="2">2年1学期</option>
-        <option value="3">2年2学期</option>
-        <option value="4">3年1学期</option>
-        <option value="5">3年2学期</option>
-        <option value="6">4年1学期</option>
-        <option value="7">4年2学期</option>
-      </select>
-    </div>
+
 
     <table>
 
@@ -291,6 +328,27 @@
 
   </div>
 
+
+  <div class="semester-dialog-backdrop" id="semesterDialogBackdrop" role="dialog" aria-modal="true" aria-labelledby="semesterDialogTitle">
+    <div class="semester-dialog">
+      <h2 id="semesterDialogTitle">次の学期を選択</h2>
+      <p>新しい欠席表を作成する学期を選んでね。</p>
+      <select id="targetSemesterSelect" aria-label="次に表示する学期">
+        <option value="0">1年1学期</option>
+        <option value="1">1年2学期</option>
+        <option value="2">2年1学期</option>
+        <option value="3">2年2学期</option>
+        <option value="4">3年1学期</option>
+        <option value="5">3年2学期</option>
+        <option value="6">4年1学期</option>
+        <option value="7">4年2学期</option>
+      </select>
+      <div class="semester-dialog-actions">
+        <button type="button" onclick="closeSemesterDialog()">キャンセル</button>
+        <button type="button" class="primary" onclick="confirmNextSemester()">新しい表を作成</button>
+      </div>
+    </div>
+  </div>
 
   <div class="semester-navigation">
 
@@ -422,10 +480,11 @@
       "nextSemesterButton"
     );
 
-  const semesterSelect =
-    document.getElementById(
-      "semesterSelect"
-    );
+  const semesterDialogBackdrop =
+    document.getElementById("semesterDialogBackdrop");
+
+  const targetSemesterSelect =
+    document.getElementById("targetSemesterSelect");
 
 
 
@@ -469,7 +528,7 @@
       getCurrentData();
 
 
-    semesterSelect.value = String(getCurrentSemester());
+
 
 
     for (
@@ -1161,43 +1220,35 @@
 
 
   /*
-   * 次の学期へ
+   * 「次の学期へ」を押したら、移動先を選ぶ画面を開く。
    */
 
   function nextSemester() {
-    const currentSemester = getCurrentSemester();
-
-    // 4年2学期より先には進まない。
-    if (currentSemester >= LAST_SEMESTER) return;
-
-    // 次の学期は必ず新しい表として追加する。
-    semesterRecords.push({
-      semester: currentSemester + 1,
-      data: {}
-    });
-    currentRecordIndex = semesterRecords.length - 1;
-    selectedKey = null;
-    save();
-    createTable();
+    const suggestedSemester = Math.min(
+      getCurrentSemester() + 1,
+      LAST_SEMESTER
+    );
+    targetSemesterSelect.value = String(suggestedSemester);
+    semesterDialogBackdrop.classList.add("open");
   }
 
+  function closeSemesterDialog() {
+    semesterDialogBackdrop.classList.remove("open");
+  }
 
   /*
-   * 学期を直接選択。
-   * 別の学期を選ぶと、その学期の新しい表を作る。
-   * 既存の同名学期のデータは上書きしない。
+   * 選択した学期の新しい表を作成する。
+   * 同じ学期を選んでも、過去の表は上書きしない。
    */
 
-  function selectSemester(value) {
-    const targetSemester = parseInt(value, 10);
+  function confirmNextSemester() {
+    const targetSemester = parseInt(targetSemesterSelect.value, 10);
 
     if (isNaN(targetSemester) ||
         targetSemester < 0 ||
         targetSemester > LAST_SEMESTER) {
       return;
     }
-
-    if (targetSemester === getCurrentSemester()) return;
 
     semesterRecords.push({
       semester: targetSemester,
@@ -1206,6 +1257,7 @@
     currentRecordIndex = semesterRecords.length - 1;
     selectedKey = null;
     save();
+    closeSemesterDialog();
     createTable();
   }
 
@@ -1313,7 +1365,7 @@
     const atFirstRecord = currentRecordIndex === 0;
     previousSemesterButton.disabled = atFirstRecord;
     previousSemesterButton.classList.toggle("hidden", atFirstRecord);
-    nextSemesterButton.disabled = getCurrentSemester() >= LAST_SEMESTER;
+    nextSemesterButton.disabled = false;
   }
 
 
