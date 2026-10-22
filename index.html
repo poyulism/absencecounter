@@ -301,9 +301,11 @@
   /*
    * 学期データ
    *
-   * semesters[0] = 1学期
-   * semesters[1] = 2学期
-   * semesters[2] = 3学期
+   * 2学期制：
+   * semesters[0] = 1年1学期
+   * semesters[1] = 1年2学期
+   * semesters[2] = 2年1学期
+   * semesters[3] = 2年2学期
    */
 
   let semesters =
@@ -411,8 +413,11 @@
       getCurrentData();
 
 
+    const schoolYear = Math.floor(currentSemester / 2) + 1;
+    const semesterInYear = (currentSemester % 2) + 1;
+
     semesterLabel.textContent =
-      `${currentSemester + 1}学期`;
+      `${schoolYear}年${semesterInYear}学期`;
 
 
     for (
