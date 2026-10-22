@@ -44,7 +44,22 @@
       font-size: 14px;
       color: #777;
       margin-top: -10px;
+      margin-bottom: 8px;
+    }
+
+    .semester-select-wrap {
+      display: flex;
+      justify-content: center;
       margin-bottom: 12px;
+    }
+
+    .semester-select {
+      padding: 8px 12px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      background: #fff;
+      color: #333;
+      font-size: 14px;
     }
 
     table {
@@ -217,7 +232,25 @@
       class="semester"
       id="semesterLabel"
     >
-      1学期
+      1年1学期
+    </div>
+
+    <div class="semester-select-wrap">
+      <select
+        class="semester-select"
+        id="semesterSelect"
+        aria-label="表示する学期を選択"
+        onchange="selectSemester(this.value)"
+      >
+        <option value="0">1年1学期</option>
+        <option value="1">1年2学期</option>
+        <option value="2">2年1学期</option>
+        <option value="3">2年2学期</option>
+        <option value="4">3年1学期</option>
+        <option value="5">3年2学期</option>
+        <option value="6">4年1学期</option>
+        <option value="7">4年2学期</option>
+      </select>
     </div>
 
     <table>
@@ -276,6 +309,7 @@
     </button>
 
     <button
+      id="nextSemesterButton"
       onclick="nextSemester()"
     >
       次の学期へ →
@@ -336,6 +370,10 @@
     currentSemester = 0;
   }
 
+  if (currentSemester > LAST_SEMESTER) {
+    currentSemester = LAST_SEMESTER;
+  }
+
 
   /*
    * 現在選択されているセル
@@ -372,6 +410,18 @@
     document.getElementById(
       "previousSemesterButton"
     );
+
+  const nextSemesterButton =
+    document.getElementById(
+      "nextSemesterButton"
+    );
+
+  const semesterSelect =
+    document.getElementById(
+      "semesterSelect"
+    );
+
+  const LAST_SEMESTER = 7;
 
 
   /*
@@ -416,8 +466,9 @@
     const schoolYear = Math.floor(currentSemester / 2) + 1;
     const semesterInYear = (currentSemester % 2) + 1;
 
-    semesterLabel.textContent =
-      `${schoolYear}年${semesterInYear}学期`;
+    const label = `${schoolYear}年${semesterInYear}学期`;
+    semesterLabel.textContent = label;
+    semesterSelect.value = String(currentSemester);
 
 
     for (
@@ -1114,6 +1165,11 @@
 
   function nextSemester() {
 
+    // 4年2学期より先には進まない。
+    if (currentSemester >= LAST_SEMESTER) {
+      return;
+    }
+
     currentSemester++;
 
 
@@ -1150,6 +1206,28 @@
 
     createTable();
 
+  }
+
+
+  /*
+   * 学期を直接選択
+   */
+
+  function selectSemester(value) {
+    const targetSemester = parseInt(value, 10);
+
+    if (
+      isNaN(targetSemester) ||
+      targetSemester < 0 ||
+      targetSemester > LAST_SEMESTER
+    ) {
+      return;
+    }
+
+    currentSemester = targetSemester;
+    selectedKey = null;
+    save();
+    createTable();
   }
 
 
@@ -1283,24 +1361,13 @@
 
   function updatePreviousButton() {
 
-    if (
+    previousSemesterButton.disabled = currentSemester === 0;
+    previousSemesterButton.classList.toggle(
+      "hidden",
       currentSemester === 0
-    ) {
+    );
 
-      previousSemesterButton.classList.add(
-        "hidden"
-      );
-
-    }
-
-    else {
-
-      previousSemesterButton.classList.remove(
-        "hidden"
-      );
-
-    }
-
+    nextSemesterButton.disabled = currentSemester >= LAST_SEMESTER;
   }
 
 
