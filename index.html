@@ -1327,10 +1327,26 @@
    */
 
   function nextSemester() {
-    const suggestedSemester = Math.min(
-      getCurrentSemester() + 1,
-      LAST_SEMESTER
+    const currentSemester = getCurrentSemester();
+    const nextTargetSemester = currentSemester + 1;
+
+    // まず、現在の学期より後にある記録を探す。
+    // すでに次の学期の表があれば、新規作成せずその表へ移動する。
+    const existingNextIndex = semesterRecords.findIndex(
+      (record, index) => index > currentRecordIndex &&
+        record.semester === nextTargetSemester
     );
+
+    if (existingNextIndex !== -1) {
+      currentRecordIndex = existingNextIndex;
+      selectedKey = null;
+      save();
+      createTable();
+      return;
+    }
+
+    // 次の学期の記録がなければ、移動先の選択画面を開く。
+    const suggestedSemester = Math.min(nextTargetSemester, LAST_SEMESTER);
     targetSemesterSelect.value = String(suggestedSemester);
     semesterDialogBackdrop.classList.add("open");
   }
