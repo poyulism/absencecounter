@@ -344,11 +344,6 @@
 
     </table>
 
-    <div class="semester-history" aria-label="追加済みの学期一覧">
-      <p class="semester-history-title">追加した学期（青色が現在表示中）</p>
-      <div class="semester-history-list" id="semesterHistoryList"></div>
-    </div>
-
     <div class="counter-buttons">
 
       <button
@@ -365,6 +360,11 @@
         ＋
       </button>
 
+    </div>
+
+    <div class="semester-history" aria-label="追加済みの学期一覧">
+      <p class="semester-history-title">追加した学期（青色が現在表示中）</p>
+      <div class="semester-history-list" id="semesterHistoryList"></div>
     </div>
 
   </div>
@@ -1323,30 +1323,22 @@
 
 
   /*
-   * 「次の学期へ」を押したら、移動先を選ぶ画面を開く。
+   * 「次の学期へ」を押したら、一覧に表示されている順で次の記録へ進む。
+   * 末尾まで進んだ場合だけ、新しい表を作る学期の選択画面を開く。
    */
 
   function nextSemester() {
-    const currentSemester = getCurrentSemester();
-    const nextTargetSemester = currentSemester + 1;
+    const nextIndex = currentRecordIndex + 1;
 
-    // まず、現在の学期より後にある記録を探す。
-    // すでに次の学期の表があれば、新規作成せずその表へ移動する。
-    const existingNextIndex = semesterRecords.findIndex(
-      (record, index) => index > currentRecordIndex &&
-        record.semester === nextTargetSemester
-    );
-
-    if (existingNextIndex !== -1) {
-      currentRecordIndex = existingNextIndex;
+    if (nextIndex < semesterRecords.length) {
+      currentRecordIndex = nextIndex;
       selectedKey = null;
       save();
       createTable();
       return;
     }
 
-    // 次の学期の記録がなければ、移動先の選択画面を開く。
-    const suggestedSemester = Math.min(nextTargetSemester, LAST_SEMESTER);
+    const suggestedSemester = Math.min(getCurrentSemester() + 1, LAST_SEMESTER);
     targetSemesterSelect.value = String(suggestedSemester);
     semesterDialogBackdrop.classList.add("open");
   }
