@@ -40,7 +40,7 @@
     }
 
     .semester-history {
-      margin: 0 0 16px;
+      margin: 12px 0 16px;
     }
 
     .semester-history-title {
@@ -55,22 +55,49 @@
       gap: 7px;
     }
 
-    .semester-chip {
+    .semester-history-item {
+      display: inline-flex;
+      align-items: stretch;
+      overflow: hidden;
       border: 1px solid #d5d5d5;
       border-radius: 8px;
       background: #fff;
+    }
+
+    .semester-chip {
+      border: 0;
+      background: transparent;
       color: #555;
       padding: 7px 10px;
       font-size: 13px;
       cursor: pointer;
     }
 
-    .semester-chip.current {
+    .semester-history-item.current {
       border-color: #2674c9;
       background: #2674c9;
+      box-shadow: 0 0 0 2px rgba(38, 116, 201, 0.16);
+    }
+
+    .semester-history-item.current .semester-chip {
       color: #fff;
       font-weight: 700;
-      box-shadow: 0 0 0 2px rgba(38, 116, 201, 0.16);
+    }
+
+    .semester-delete {
+      border: 0;
+      border-left: 1px solid rgba(120, 120, 120, 0.25);
+      padding: 0 8px;
+      background: rgba(0, 0, 0, 0.04);
+      color: #777;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    .semester-history-item.current .semester-delete {
+      color: #fff;
+      border-left-color: rgba(255, 255, 255, 0.35);
+      background: rgba(0, 0, 0, 0.08);
     }
 
     .semester-dialog-backdrop {
@@ -299,12 +326,7 @@
 
     <h1>欠席カウンター</h1>
 
-    <div class="semester-history" aria-label="追加済みの学期一覧">
-      <p class="semester-history-title">追加した学期（青色が現在表示中）</p>
-      <div class="semester-history-list" id="semesterHistoryList"></div>
-    </div>
-
-    <table>
+<table>
 
       <thead>
         <tr>
@@ -322,6 +344,10 @@
 
     </table>
 
+    <div class="semester-history" aria-label="追加済みの学期一覧">
+      <p class="semester-history-title">追加した学期（青色が現在表示中）</p>
+      <div class="semester-history-list" id="semesterHistoryList"></div>
+    </div>
 
     <div class="counter-buttons">
 
@@ -632,24 +658,52 @@
       const term = semester % 2 + 1;
       const key = String(semester);
       seen[key] = (seen[key] || 0) + 1;
+      const item = document.createElement("div");
+      item.className = "semester-history-item";
+      if (index === currentRecordIndex) item.classList.add("current");
       const chip = document.createElement("button");
       chip.type = "button";
       chip.className = "semester-chip";
       chip.textContent = year + "-" + term + (seen[key] > 1 ? " (" + seen[key] + ")" : "");
       chip.setAttribute("aria-label", year + "年" + term + "学期" + (seen[key] > 1 ? "、" + seen[key] + "回目の記録" : "") + (index === currentRecordIndex ? "、現在表示中" : ""));
-      if (index === currentRecordIndex) {
-        chip.classList.add("current");
-        chip.setAttribute("aria-current", "page");
-      }
+      if (index === currentRecordIndex) chip.setAttribute("aria-current", "page");
       chip.addEventListener("click", () => {
         currentRecordIndex = index;
         selectedKey = null;
         save();
         createTable();
       });
-      semesterHistoryList.appendChild(chip);
+      const deleteButton = document.createElement("button");
+      deleteButton.type = "button";
+      deleteButton.className = "semester-delete";
+      deleteButton.textContent = "×";
+      deleteButton.setAttribute("aria-label", year + "年" + term + "学期の記録を削除");
+      deleteButton.addEventListener("click", () => deleteSemesterRecord(index, year, term, seen[key]));
+      item.appendChild(chip);
+      item.appendChild(deleteButton);
+      semesterHistoryList.appendChild(item);
     });
   }
+
+  function deleteSemesterRecord(index, year, term, attemptNumber) {
+    if (semesterRecords.length <= 1) {
+      alert("最後の1つの学期は削除できません。");
+      return;
+    }
+    const attemptText = attemptNumber > 1 ? "（" + attemptNumber + "回目の記録）" : "";
+    const confirmed = confirm(year + "年" + term + "学期" + attemptText + "の表と欠席データを削除する？\nこの操作は取り消せません。");
+    if (!confirmed) return;
+    semesterRecords.splice(index, 1);
+    if (index < currentRecordIndex) {
+      currentRecordIndex--;
+    } else if (index === currentRecordIndex) {
+      currentRecordIndex = Math.min(index, semesterRecords.length - 1);
+    }
+    selectedKey = null;
+    save();
+    createTable();
+  }
+
 
   /*
    * セルの表示
